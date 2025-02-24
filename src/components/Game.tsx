@@ -119,7 +119,6 @@ const Game = () => {
       setIsDealing(true);
       setPlayerHands(newHands);
       setDeck(newDeck);
-      setCash(cash - bet);
       setBet(bet * 2);
 
       await new Promise((resolve) => setTimeout(resolve, 400));
@@ -160,7 +159,7 @@ const Game = () => {
     }
   };
 
-  const dealerTurn = useCallback(async () => {
+  const dealerTurn = async () => {
     let currentHand = [...dealerHand];
     while (calculateHandValue(currentHand) < 17) {
       await new Promise((resolve) => setTimeout(resolve, 400));
@@ -169,53 +168,54 @@ const Game = () => {
       setDealerHand([...currentHand]);
     }
     determineWinner(currentHand);
-  }, [dealerHand]);
-
-  const determineWinner = (
-    finalDealerHand: { suit: string; value: string }[]
-  ) => {
-    const dealerValue = calculateHandValue(finalDealerHand);
-    let newCash = cash;
-    const messages: string[] = [];
-    const handPrefix =
-      playerHands.length > 1
-        ? (index: number) => `Hand ${index + 1}: `
-        : () => "";
-
-    playerHands.forEach((hand, index) => {
-      const playerValue = calculateHandValue(hand);
-      const prefix = handPrefix(index);
-      if (playerValue > 21) {
-        newCash -= bet;
-        messages.push(`${prefix}Bust! You lose.`);
-      } else if (dealerValue > 21) {
-        newCash += bet;
-        messages.push(`${prefix}Dealer busts! You win!`);
-      } else if (playerValue === 21 && hand.length === 2) {
-        if (dealerValue === 21 && finalDealerHand.length === 2) {
-          messages.push(`${prefix}Push! Both have Blackjack.`);
-        } else {
-          newCash += bet * 1.5;
-          messages.push(`${prefix}Blackjack! You win!`);
-        }
-      } else if (dealerValue === 21 && finalDealerHand.length === 2) {
-        newCash -= bet;
-        messages.push(`${prefix}Dealer has Blackjack. You lose.`);
-      } else if (playerValue > dealerValue) {
-        newCash += bet;
-        messages.push(`${prefix}You win!`);
-      } else if (playerValue < dealerValue) {
-        newCash -= bet;
-        messages.push(`${prefix}You lose.`);
-      } else {
-        messages.push(`${prefix}Push!`);
-      }
-    });
-
-    setCash(newCash);
-    setResultMessage(messages.join(" "));
-    setGameState(newCash <= 0 ? "gameOver" : "roundOver");
   };
+
+  const determineWinner = useCallback(
+    (finalDealerHand: { suit: string; value: string }[]) => {
+      const dealerValue = calculateHandValue(finalDealerHand);
+      let newCash = cash;
+      const messages: string[] = [];
+      const handPrefix =
+        playerHands.length > 1
+          ? (index: number) => `Hand ${index + 1}: `
+          : () => "";
+
+      playerHands.forEach((hand, index) => {
+        const playerValue = calculateHandValue(hand);
+        const prefix = handPrefix(index);
+        if (playerValue > 21) {
+          newCash -= bet;
+          messages.push(`${prefix}Bust! You lose.`);
+        } else if (dealerValue > 21) {
+          newCash += bet;
+          messages.push(`${prefix}Dealer busts! You win!`);
+        } else if (playerValue === 21 && hand.length === 2) {
+          if (dealerValue === 21 && finalDealerHand.length === 2) {
+            messages.push(`${prefix}Push! Both have Blackjack.`);
+          } else {
+            newCash += bet * 1.5;
+            messages.push(`${prefix}Blackjack! You win!`);
+          }
+        } else if (dealerValue === 21 && finalDealerHand.length === 2) {
+          newCash -= bet;
+          messages.push(`${prefix}Dealer has Blackjack. You lose.`);
+        } else if (playerValue > dealerValue) {
+          newCash += bet;
+          messages.push(`${prefix}You win!`);
+        } else if (playerValue < dealerValue) {
+          newCash -= bet;
+          messages.push(`${prefix}You lose.`);
+        } else {
+          messages.push(`${prefix}Push!`);
+        }
+      });
+
+      setCash(newCash);
+      setResultMessage(messages.join(" "));
+      setGameState(newCash <= 0 ? "gameOver" : "roundOver");
+    },
+    [bet, cash, playerHands]
+  );
 
   const clearTable = async () => {
     setGameState("clearing");

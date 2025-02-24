@@ -2,7 +2,7 @@
 
 import { calculateHandValue } from "@/utils";
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Bet from "./Bet";
 import Controls from "./Controls";
 import Deck from "./Deck";
@@ -22,82 +22,83 @@ const Game = () => {
   const [bet, setBet] = useState(0);
   const [lastBet, setLastBet] = useState(0);
   const [gameState, setGameState] = useState<
-    "betting" | "playing" | "dealerTurn" | "roundOver" | "gameOver"
+    "betting" | "playing" | "dealerTurn" | "roundOver" | "gameOver" | "clearing"
   >("betting");
   const [resultMessage, setResultMessage] = useState("");
-  const [isDealingPlayer, setIsDealingPlayer] = useState(false);
-
-  // Track whether each hand has been hit to enforce double-down rules
+  const [isDealing, setIsDealing] = useState(false); // Unified dealing state
   const [hasHit, setHasHit] = useState<boolean[]>([]);
 
+  // Initialize deck on mount
   useEffect(() => {
     const newDeck = Deck.createDeck();
     Deck.shuffle(newDeck);
     setDeck(newDeck);
   }, []);
 
-  const dealInitialCards = (betAmount: number) => {
+  // Deal cards one at a time with animation
+  const dealInitialCards = async (betAmount: number) => {
     const newDeck = [...deck];
-    const playerCard1 = Deck.dealCard(newDeck);
-    const dealerCard1 = Deck.dealCard(newDeck);
-    const playerCard2 = Deck.dealCard(newDeck);
-    const dealerCard2 = Deck.dealCard(newDeck);
-
-    const initialPlayerHand = [playerCard1, playerCard2].filter(
-      (card) => card !== undefined
-    );
-    const initialDealerHand = [dealerCard1, dealerCard2].filter(
-      (card) => card !== undefined
-    );
-
-    setPlayerHands([initialPlayerHand]);
-    setDealerHand(initialDealerHand);
-    setDeck(newDeck);
+    setIsDealing(true);
     setBet(betAmount);
     setLastBet(betAmount);
-    setHasHit([false]); // Initialize hasHit for one hand
-    setIsDealingPlayer(true);
+    setHasHit([false]);
 
-    setTimeout(() => {
-      setIsDealingPlayer(false);
-      const playerValue = calculateHandValue(initialPlayerHand);
-      const dealerValue = calculateHandValue(initialDealerHand);
-      if (playerValue === 21) {
-        setGameState("roundOver");
-        if (dealerValue === 21) {
-          setResultMessage("Push! Both have Blackjack.");
-        } else {
-          setCash(cash + betAmount * 1.5);
-          setResultMessage("Blackjack! You win!");
-        }
+    // Dealer cards (set both at once)
+    const dealerCard1 = Deck.dealCard(newDeck);
+    const dealerCard2 = Deck.dealCard(newDeck);
+    setDealerHand([dealerCard1, dealerCard2]);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    // Player card 1
+    const playerCard1 = Deck.dealCard(newDeck);
+    setPlayerHands([[playerCard1]]);
+    await new Promise((resolve) => setTimeout(resolve, 800)); // Wait for both dealer cards to animate
+
+    // Player card 2
+    const playerCard2 = Deck.dealCard(newDeck);
+    setPlayerHands([[playerCard1, playerCard2]]);
+    await new Promise((resolve) => setTimeout(resolve, 800)); // Wait for both dealer cards to animate
+
+    setDeck(newDeck);
+    setIsDealing(false);
+
+    const playerValue = calculateHandValue([playerCard1, playerCard2]);
+    const dealerValue = calculateHandValue([dealerCard1, dealerCard2]);
+    if (playerValue === 21) {
+      setGameState("roundOver");
+      if (dealerValue === 21) {
+        setResultMessage("Push! Both have Blackjack.");
       } else {
-        setGameState("playing");
+        setCash(cash + betAmount * 1.5);
+        setResultMessage("Blackjack! You win!");
       }
-    }, 1000);
+    } else {
+      setGameState("playing");
+    }
   };
 
-  const playerHit = () => {
+  const playerHit = async () => {
     const newDeck = [...deck];
     const newCard = Deck.dealCard(newDeck);
     const newHands = [...playerHands];
     newHands[currentHandIndex] = [...newHands[currentHandIndex], newCard];
     const newHasHit = [...hasHit];
-    newHasHit[currentHandIndex] = true; // Mark this hand as hit
+    newHasHit[currentHandIndex] = true;
+    setIsDealing(true);
     setPlayerHands(newHands);
     setHasHit(newHasHit);
     setDeck(newDeck);
-    setIsDealingPlayer(true);
 
-    setTimeout(() => {
-      setIsDealingPlayer(false);
-      if (calculateHandValue(newHands[currentHandIndex]) > 21) {
-        if (currentHandIndex < playerHands.length - 1) {
-          setCurrentHandIndex(currentHandIndex + 1);
-        } else {
-          setGameState("dealerTurn");
-        }
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    setIsDealing(false);
+
+    if (calculateHandValue(newHands[currentHandIndex]) > 21) {
+      if (currentHandIndex < playerHands.length - 1) {
+        setCurrentHandIndex(currentHandIndex + 1);
+      } else {
+        setGameState("dealerTurn");
       }
-    }, 500);
+    }
   };
 
   const playerStand = () => {
@@ -108,36 +109,31 @@ const Game = () => {
     }
   };
 
-  const playerDouble = () => {
+  const playerDouble = async () => {
     const currentHand = playerHands[currentHandIndex];
-    if (
-      cash >= bet &&
-      currentHand.length === 2 &&
-      !hasHit[currentHandIndex] // Only allow if no hits have occurred
-    ) {
+    if (cash >= bet && currentHand.length === 2 && !hasHit[currentHandIndex]) {
       const newDeck = [...deck];
       const newCard = Deck.dealCard(newDeck);
       const newHands = [...playerHands];
       newHands[currentHandIndex] = [...currentHand, newCard];
+      setIsDealing(true);
       setPlayerHands(newHands);
       setDeck(newDeck);
-      setCash(cash - bet); // Subtract additional bet
-      setBet(bet * 2); // Double the original bet
-      setIsDealingPlayer(true);
+      setCash(cash - bet);
+      setBet(bet * 2);
 
-      setTimeout(() => {
-        setIsDealingPlayer(false);
-        // After doubling, move to next hand or dealer turn (no more actions allowed)
-        if (currentHandIndex < playerHands.length - 1) {
-          setCurrentHandIndex(currentHandIndex + 1);
-        } else {
-          setGameState("dealerTurn");
-        }
-      }, 500);
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      setIsDealing(false);
+
+      if (currentHandIndex < playerHands.length - 1) {
+        setCurrentHandIndex(currentHandIndex + 1);
+      } else {
+        setGameState("dealerTurn");
+      }
     }
   };
 
-  const playerSplit = () => {
+  const playerSplit = async () => {
     const currentHand = playerHands[currentHandIndex];
     if (
       cash >= bet &&
@@ -148,38 +144,39 @@ const Game = () => {
       const newDeck = [...deck];
       const newHands = [...playerHands];
       newHands[currentHandIndex] = [currentHand[0], Deck.dealCard(newDeck)];
+      setPlayerHands(newHands);
+      await new Promise((resolve) => setTimeout(resolve, 400)); // First split card
+
       newHands.push([currentHand[1], Deck.dealCard(newDeck)]);
-      const newHasHit = [...hasHit];
-      newHasHit.push(false); // Add new hand with no hits
+      setIsDealing(true);
       setPlayerHands(newHands);
       setDeck(newDeck);
-      setCash(cash - bet); // Subtract additional bet for the new hand
+      setCash(cash - bet);
+      const newHasHit = [...hasHit, false];
       setHasHit(newHasHit);
-      setIsDealingPlayer(true);
 
-      setTimeout(() => {
-        setIsDealingPlayer(false);
-      }, 1000);
+      await new Promise((resolve) => setTimeout(resolve, 400)); // Second split card
+      setIsDealing(false);
     }
   };
 
-  const dealerTurn = async () => {
+  const dealerTurn = useCallback(async () => {
     let currentHand = [...dealerHand];
     while (calculateHandValue(currentHand) < 17) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 400));
       const newCard = Deck.dealCard(deck);
       currentHand = [...currentHand, newCard];
       setDealerHand([...currentHand]);
     }
     determineWinner(currentHand);
-  };
+  }, [dealerHand]);
 
   const determineWinner = (
     finalDealerHand: { suit: string; value: string }[]
   ) => {
     const dealerValue = calculateHandValue(finalDealerHand);
     let newCash = cash;
-    let messages: string[] = [];
+    const messages: string[] = [];
     const handPrefix =
       playerHands.length > 1
         ? (index: number) => `Hand ${index + 1}: `
@@ -217,45 +214,37 @@ const Game = () => {
 
     setCash(newCash);
     setResultMessage(messages.join(" "));
-    if (newCash <= 0) {
-      setGameState("gameOver");
-    } else {
-      setGameState("roundOver");
-    }
+    setGameState(newCash <= 0 ? "gameOver" : "roundOver");
   };
 
-  const resetRound = () => {
+  const clearTable = async () => {
+    setGameState("clearing");
+    setIsDealing(true); // Reuse for clearing animation
+    await new Promise((resolve) => setTimeout(resolve, 800)); // Clearing animation duration
+    setPlayerHands([[]]);
+    setDealerHand([]);
     setCurrentHandIndex(0);
+    setHasHit([]);
+    setIsDealing(false);
     setGameState("betting");
     if (deck.length < 20) {
       const newDeck = Deck.createDeck();
       Deck.shuffle(newDeck);
       setDeck(newDeck);
     }
-    setHasHit([]); // Reset hit tracking
   };
 
-  const resetGame = () => {
+  const resetGame = async () => {
     setCash(2000);
-    setPlayerHands([[]]);
-    setDealerHand([]);
     setBet(0);
     setLastBet(0);
-    setCurrentHandIndex(0);
     setResultMessage("");
-    setIsDealingPlayer(false);
-    setHasHit([]); // Reset hit tracking
-    const newDeck = Deck.createDeck();
-    Deck.shuffle(newDeck);
-    setDeck(newDeck);
-    setGameState("betting");
+    await clearTable();
   };
 
   const replayWithLastBet = () => {
     if (lastBet > 0 && lastBet <= cash) {
-      setPlayerHands([[]]);
-      setDealerHand([]);
-      dealInitialCards(lastBet);
+      clearTable().then(() => dealInitialCards(lastBet));
     }
   };
 
@@ -263,7 +252,7 @@ const Game = () => {
     if (gameState === "dealerTurn") {
       dealerTurn();
     }
-  }, [gameState]);
+  }, [dealerTurn, gameState]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-emerald-800 to-emerald-400 p-4">
@@ -271,12 +260,12 @@ const Game = () => {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1 }}
-        className="text-5xl font-bold text-white mb-6"
+        className="text-5xl font-bold text-white mb-6 drop-shadow-lg"
       >
         Blackjack
       </motion.h1>
       <Score cash={cash} />
-      {gameState === "betting" && (
+      {gameState === "betting" && !isDealing && (
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -291,7 +280,7 @@ const Game = () => {
         </motion.div>
       )}
       <div className="mt-8 w-full max-w-4xl">
-        <h2 className="text-2xl font-semibold text-white text-center">
+        <h2 className="text-2xl font-semibold text-white text-center drop-shadow-md">
           Dealer
         </h2>
         <Hand
@@ -301,7 +290,7 @@ const Game = () => {
         />
       </div>
       <div className="mt-8 w-full max-w-4xl">
-        <h2 className="text-2xl font-semibold text-white text-center">
+        <h2 className="text-2xl font-semibold text-white text-center drop-shadow-md">
           Player
         </h2>
         {playerHands.map((hand, index) => (
@@ -310,7 +299,7 @@ const Game = () => {
           </div>
         ))}
       </div>
-      {gameState === "playing" && !isDealingPlayer && (
+      {gameState === "playing" && !isDealing && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -323,21 +312,21 @@ const Game = () => {
             split={playerSplit}
             canDouble={
               playerHands[currentHandIndex].length === 2 &&
-              !hasHit[currentHandIndex] && // Only allow if no hits
+              !hasHit[currentHandIndex] &&
               cash >= bet
             }
             canSplit={
               playerHands[currentHandIndex].length === 2 &&
-              playerHands[currentHandIndex][0].value ===
-                playerHands[currentHandIndex][1].value &&
-              !hasHit[currentHandIndex] && // Only allow if no hits
+              playerHands[currentHandIndex][0]?.value ===
+                playerHands[currentHandIndex][1]?.value &&
+              !hasHit[currentHandIndex] &&
               cash >= bet
             }
           />
         </motion.div>
       )}
       {(gameState === "roundOver" || gameState === "gameOver") &&
-        !isDealingPlayer && (
+        !isDealing && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -346,8 +335,8 @@ const Game = () => {
           >
             {resultMessage && (
               <motion.p
-                className={`text-2xl font-bold mb-4 ${
-                  resultMessage?.includes("lose")
+                className={`text-2xl font-bold mb-4 drop-shadow-md ${
+                  resultMessage.includes("lose")
                     ? "text-rose-500"
                     : "text-yellow-300"
                 }`}
@@ -360,27 +349,33 @@ const Game = () => {
             )}
             {gameState === "roundOver" && (
               <div className="flex space-x-4">
-                <button
+                <motion.button
                   onClick={replayWithLastBet}
                   className="px-6 py-3 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   Same Bet (${lastBet})
-                </button>
-                <button
-                  onClick={resetRound}
+                </motion.button>
+                <motion.button
+                  onClick={clearTable}
                   className="px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   New Bet
-                </button>
+                </motion.button>
               </div>
             )}
             {gameState === "gameOver" && (
-              <button
+              <motion.button
                 onClick={resetGame}
                 className="px-6 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 Restart Game
-              </button>
+              </motion.button>
             )}
           </motion.div>
         )}

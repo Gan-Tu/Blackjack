@@ -1,27 +1,34 @@
-'use client';
+"use client";
 
-import { calculateHandValue } from '@/utils';
-import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
-import Bet from './Bet';
-import Controls from './Controls';
-import Deck from './Deck';
-import Hand from './Hand';
-import Score from './Score';
+import { calculateHandValue } from "@/utils";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import Bet from "./Bet";
+import Controls from "./Controls";
+import Deck from "./Deck";
+import Hand from "./Hand";
+import Score from "./Score";
 
 const Game = () => {
   const [deck, setDeck] = useState<{ suit: string; value: string }[]>([]);
-  const [playerHands, setPlayerHands] = useState<{ suit: string; value: string }[][]>([[]]);
+  const [playerHands, setPlayerHands] = useState<
+    { suit: string; value: string }[][]
+  >([[]]);
   const [currentHandIndex, setCurrentHandIndex] = useState(0);
-  const [dealerHand, setDealerHand] = useState<{ suit: string; value: string }[]>([]);
+  const [dealerHand, setDealerHand] = useState<
+    { suit: string; value: string }[]
+  >([]);
   const [cash, setCash] = useState(2000);
   const [bet, setBet] = useState(0);
   const [lastBet, setLastBet] = useState(0);
   const [gameState, setGameState] = useState<
-    'betting' | 'playing' | 'dealerTurn' | 'roundOver' | 'gameOver'
-  >('betting');
-  const [resultMessage, setResultMessage] = useState('');
-  const [isDealingPlayer, setIsDealingPlayer] = useState(false); // New state for player dealing animation
+    "betting" | "playing" | "dealerTurn" | "roundOver" | "gameOver"
+  >("betting");
+  const [resultMessage, setResultMessage] = useState("");
+  const [isDealingPlayer, setIsDealingPlayer] = useState(false);
+
+  // Track whether each hand has been hit to enforce double-down rules
+  const [hasHit, setHasHit] = useState<boolean[]>([]);
 
   useEffect(() => {
     const newDeck = Deck.createDeck();
@@ -36,14 +43,19 @@ const Game = () => {
     const playerCard2 = Deck.dealCard(newDeck);
     const dealerCard2 = Deck.dealCard(newDeck);
 
-    const initialPlayerHand = [playerCard1, playerCard2].filter(card => card !== undefined);
-    const initialDealerHand = [dealerCard1, dealerCard2].filter(card => card !== undefined);
+    const initialPlayerHand = [playerCard1, playerCard2].filter(
+      (card) => card !== undefined
+    );
+    const initialDealerHand = [dealerCard1, dealerCard2].filter(
+      (card) => card !== undefined
+    );
 
     setPlayerHands([initialPlayerHand]);
     setDealerHand(initialDealerHand);
     setDeck(newDeck);
     setBet(betAmount);
     setLastBet(betAmount);
+    setHasHit([false]); // Initialize hasHit for one hand
     setIsDealingPlayer(true);
 
     setTimeout(() => {
@@ -51,7 +63,7 @@ const Game = () => {
       const playerValue = calculateHandValue(initialPlayerHand);
       const dealerValue = calculateHandValue(initialDealerHand);
       if (playerValue === 21) {
-        setGameState('roundOver');
+        setGameState("roundOver");
         if (dealerValue === 21) {
           setResultMessage("Push! Both have Blackjack.");
         } else {
@@ -59,9 +71,9 @@ const Game = () => {
           setResultMessage("Blackjack! You win!");
         }
       } else {
-        setGameState('playing');
+        setGameState("playing");
       }
-    }, 1000); // Delay to match card dealing animation (2 cards * 0.5s each)
+    }, 1000);
   };
 
   const playerHit = () => {
@@ -69,7 +81,10 @@ const Game = () => {
     const newCard = Deck.dealCard(newDeck);
     const newHands = [...playerHands];
     newHands[currentHandIndex] = [...newHands[currentHandIndex], newCard];
+    const newHasHit = [...hasHit];
+    newHasHit[currentHandIndex] = true; // Mark this hand as hit
     setPlayerHands(newHands);
+    setHasHit(newHasHit);
     setDeck(newDeck);
     setIsDealingPlayer(true);
 
@@ -79,40 +94,46 @@ const Game = () => {
         if (currentHandIndex < playerHands.length - 1) {
           setCurrentHandIndex(currentHandIndex + 1);
         } else {
-          setGameState('dealerTurn');
+          setGameState("dealerTurn");
         }
       }
-    }, 500); // Delay for one card animation
+    }, 500);
   };
 
   const playerStand = () => {
     if (currentHandIndex < playerHands.length - 1) {
       setCurrentHandIndex(currentHandIndex + 1);
     } else {
-      setGameState('dealerTurn');
+      setGameState("dealerTurn");
     }
   };
 
   const playerDouble = () => {
-    if (cash >= bet && playerHands[currentHandIndex].length === 2) {
+    const currentHand = playerHands[currentHandIndex];
+    if (
+      cash >= bet &&
+      currentHand.length === 2 &&
+      !hasHit[currentHandIndex] // Only allow if no hits have occurred
+    ) {
       const newDeck = [...deck];
       const newCard = Deck.dealCard(newDeck);
       const newHands = [...playerHands];
-      newHands[currentHandIndex] = [...newHands[currentHandIndex], newCard];
+      newHands[currentHandIndex] = [...currentHand, newCard];
       setPlayerHands(newHands);
       setDeck(newDeck);
-      setCash(cash - bet);
-      setBet(bet * 2);
+      setCash(cash - bet); // Subtract additional bet
+      setBet(bet * 2); // Double the original bet
       setIsDealingPlayer(true);
 
       setTimeout(() => {
         setIsDealingPlayer(false);
+        // After doubling, move to next hand or dealer turn (no more actions allowed)
         if (currentHandIndex < playerHands.length - 1) {
           setCurrentHandIndex(currentHandIndex + 1);
         } else {
-          setGameState('dealerTurn');
+          setGameState("dealerTurn");
         }
-      }, 500); // Delay for one card animation
+      }, 500);
     }
   };
 
@@ -121,20 +142,24 @@ const Game = () => {
     if (
       cash >= bet &&
       currentHand.length === 2 &&
-      currentHand[0].value === currentHand[1].value
+      currentHand[0].value === currentHand[1].value &&
+      !hasHit[currentHandIndex]
     ) {
       const newDeck = [...deck];
       const newHands = [...playerHands];
       newHands[currentHandIndex] = [currentHand[0], Deck.dealCard(newDeck)];
       newHands.push([currentHand[1], Deck.dealCard(newDeck)]);
+      const newHasHit = [...hasHit];
+      newHasHit.push(false); // Add new hand with no hits
       setPlayerHands(newHands);
       setDeck(newDeck);
-      setCash(cash - bet);
+      setCash(cash - bet); // Subtract additional bet for the new hand
+      setHasHit(newHasHit);
       setIsDealingPlayer(true);
 
       setTimeout(() => {
         setIsDealingPlayer(false);
-      }, 1000); // Delay for two card animations
+      }, 1000);
     }
   };
 
@@ -149,57 +174,65 @@ const Game = () => {
     determineWinner(currentHand);
   };
 
-  const determineWinner = (finalDealerHand: { suit: string; value: string }[]) => {
+  const determineWinner = (
+    finalDealerHand: { suit: string; value: string }[]
+  ) => {
     const dealerValue = calculateHandValue(finalDealerHand);
     let newCash = cash;
     let messages: string[] = [];
+    const handPrefix =
+      playerHands.length > 1
+        ? (index: number) => `Hand ${index + 1}: `
+        : () => "";
 
     playerHands.forEach((hand, index) => {
       const playerValue = calculateHandValue(hand);
+      const prefix = handPrefix(index);
       if (playerValue > 21) {
         newCash -= bet;
-        messages.push(`Hand ${index + 1}: Bust! You lose.`);
+        messages.push(`${prefix}Bust! You lose.`);
       } else if (dealerValue > 21) {
         newCash += bet;
-        messages.push(`Hand ${index + 1}: Dealer busts! You win!`);
+        messages.push(`${prefix}Dealer busts! You win!`);
       } else if (playerValue === 21 && hand.length === 2) {
         if (dealerValue === 21 && finalDealerHand.length === 2) {
-          messages.push(`Hand ${index + 1}: Push! Both have Blackjack.`);
+          messages.push(`${prefix}Push! Both have Blackjack.`);
         } else {
           newCash += bet * 1.5;
-          messages.push(`Hand ${index + 1}: Blackjack! You win!`);
+          messages.push(`${prefix}Blackjack! You win!`);
         }
       } else if (dealerValue === 21 && finalDealerHand.length === 2) {
         newCash -= bet;
-        messages.push(`Hand ${index + 1}: Dealer has Blackjack. You lose.`);
+        messages.push(`${prefix}Dealer has Blackjack. You lose.`);
       } else if (playerValue > dealerValue) {
         newCash += bet;
-        messages.push(`Hand ${index + 1}: You win!`);
+        messages.push(`${prefix}You win!`);
       } else if (playerValue < dealerValue) {
         newCash -= bet;
-        messages.push(`Hand ${index + 1}: You lose.`);
+        messages.push(`${prefix}You lose.`);
       } else {
-        messages.push(`Hand ${index + 1}: Push!`);
+        messages.push(`${prefix}Push!`);
       }
     });
 
     setCash(newCash);
-    setResultMessage(messages.join(' '));
+    setResultMessage(messages.join(" "));
     if (newCash <= 0) {
-      setGameState('gameOver');
+      setGameState("gameOver");
     } else {
-      setGameState('roundOver');
+      setGameState("roundOver");
     }
   };
 
   const resetRound = () => {
     setCurrentHandIndex(0);
-    setGameState('betting');
+    setGameState("betting");
     if (deck.length < 20) {
       const newDeck = Deck.createDeck();
       Deck.shuffle(newDeck);
       setDeck(newDeck);
     }
+    setHasHit([]); // Reset hit tracking
   };
 
   const resetGame = () => {
@@ -209,12 +242,13 @@ const Game = () => {
     setBet(0);
     setLastBet(0);
     setCurrentHandIndex(0);
-    setResultMessage('');
+    setResultMessage("");
     setIsDealingPlayer(false);
+    setHasHit([]); // Reset hit tracking
     const newDeck = Deck.createDeck();
     Deck.shuffle(newDeck);
     setDeck(newDeck);
-    setGameState('betting');
+    setGameState("betting");
   };
 
   const replayWithLastBet = () => {
@@ -226,13 +260,13 @@ const Game = () => {
   };
 
   useEffect(() => {
-    if (gameState === 'dealerTurn') {
+    if (gameState === "dealerTurn") {
       dealerTurn();
     }
   }, [gameState]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-green-800 to-green-600 p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-emerald-800 to-emerald-400 p-4">
       <motion.h1
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -242,28 +276,41 @@ const Game = () => {
         Blackjack
       </motion.h1>
       <Score cash={cash} />
-      {gameState === 'betting' && (
+      {gameState === "betting" && (
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
         >
-          <Bet startGame={dealInitialCards} cash={cash} lastBet={lastBet} replayWithLastBet={replayWithLastBet} />
+          <Bet
+            startGame={dealInitialCards}
+            cash={cash}
+            lastBet={lastBet}
+            replayWithLastBet={replayWithLastBet}
+          />
         </motion.div>
       )}
       <div className="mt-8 w-full max-w-4xl">
-        <h2 className="text-2xl font-semibold text-white text-center">Dealer</h2>
-        <Hand hand={dealerHand} isDealer={true} revealAll={gameState === 'roundOver' || gameState === 'gameOver'} />
+        <h2 className="text-2xl font-semibold text-white text-center">
+          Dealer
+        </h2>
+        <Hand
+          hand={dealerHand}
+          isDealer={true}
+          revealAll={gameState === "roundOver" || gameState === "gameOver"}
+        />
       </div>
       <div className="mt-8 w-full max-w-4xl">
-        <h2 className="text-2xl font-semibold text-white text-center">Player</h2>
+        <h2 className="text-2xl font-semibold text-white text-center">
+          Player
+        </h2>
         {playerHands.map((hand, index) => (
           <div key={index} className="mb-4">
             <Hand hand={hand} isDealer={false} revealAll={true} />
           </div>
         ))}
       </div>
-      {gameState === 'playing' && !isDealingPlayer && (
+      {gameState === "playing" && !isDealingPlayer && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -274,58 +321,69 @@ const Game = () => {
             stand={playerStand}
             double={playerDouble}
             split={playerSplit}
-            canDouble={playerHands[currentHandIndex].length === 2 && cash >= bet}
+            canDouble={
+              playerHands[currentHandIndex].length === 2 &&
+              !hasHit[currentHandIndex] && // Only allow if no hits
+              cash >= bet
+            }
             canSplit={
               playerHands[currentHandIndex].length === 2 &&
-              playerHands[currentHandIndex][0].value === playerHands[currentHandIndex][1].value &&
+              playerHands[currentHandIndex][0].value ===
+                playerHands[currentHandIndex][1].value &&
+              !hasHit[currentHandIndex] && // Only allow if no hits
               cash >= bet
             }
           />
         </motion.div>
       )}
-      {(gameState === 'roundOver' || gameState === 'gameOver') && !isDealingPlayer && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mt-6 text-center"
-        >
-          {resultMessage && (
-            <motion.p
-              className="text-2xl font-bold text-yellow-300 mb-4"
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              {resultMessage}
-            </motion.p>
-          )}
-          {gameState === 'roundOver' && (
-            <div className="flex space-x-4">
-              <button
-                onClick={replayWithLastBet}
-                className="px-6 py-3 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition"
+      {(gameState === "roundOver" || gameState === "gameOver") &&
+        !isDealingPlayer && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mt-6 text-center"
+          >
+            {resultMessage && (
+              <motion.p
+                className={`text-2xl font-bold mb-4 ${
+                  resultMessage?.includes("lose")
+                    ? "text-rose-500"
+                    : "text-yellow-300"
+                }`}
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.5 }}
               >
-                Same Bet (${lastBet})
-              </button>
+                {resultMessage}
+              </motion.p>
+            )}
+            {gameState === "roundOver" && (
+              <div className="flex space-x-4">
+                <button
+                  onClick={replayWithLastBet}
+                  className="px-6 py-3 bg-yellow-500 text-white rounded-lg font-semibold hover:bg-yellow-600 transition"
+                >
+                  Same Bet (${lastBet})
+                </button>
+                <button
+                  onClick={resetRound}
+                  className="px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
+                >
+                  New Bet
+                </button>
+              </div>
+            )}
+            {gameState === "gameOver" && (
               <button
-                onClick={resetRound}
-                className="px-6 py-3 bg-blue-500 text-white rounded-lg font-semibold hover:bg-blue-600 transition"
+                onClick={resetGame}
+                className="px-6 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition"
               >
-                New Bet
+                Restart Game
               </button>
-            </div>
-          )}
-          {gameState === 'gameOver' && (
-            <button
-              onClick={resetGame}
-              className="px-6 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition"
-            >
-              Restart Game
-            </button>
-          )}
-        </motion.div>
-      )}
+            )}
+          </motion.div>
+        )}
     </div>
   );
 };

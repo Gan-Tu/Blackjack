@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { calculateHandValue } from '@/utils';
-import { motion } from 'framer-motion';
+import { calculateHandValue } from "@/utils";
+import { motion } from "framer-motion";
 
 // Define Unicode symbols for each suit
 const suitSymbols: { [key: string]: string } = {
-  Hearts: '♥',
-  Diamonds: '♦',
-  Clubs: '♣',
-  Spades: '♠',
+  Hearts: "♥",
+  Diamonds: "♦",
+  Clubs: "♣",
+  Spades: "♠"
 };
 
 const Hand = ({
   hand,
   isDealer,
-  revealAll,
+  revealAll
 }: {
   hand: { suit: string; value: string }[];
   isDealer: boolean;
@@ -23,7 +23,9 @@ const Hand = ({
   if (!hand || hand.length === 0) {
     return (
       <div className="flex flex-col items-center">
-        <p className="text-white text-lg">{isDealer ? 'Dealer Hand' : 'Player Hand'}</p>
+        <p className="text-white text-lg">
+          {isDealer ? "Dealer Hand" : "Player Hand"}
+        </p>
       </div>
     );
   }
@@ -40,7 +42,7 @@ const Hand = ({
             className="w-24 h-36 bg-white rounded-lg shadow-lg flex flex-col items-center justify-center text-black"
             initial={{ y: -100, opacity: 0, rotate: -10 }}
             animate={{ y: 0, opacity: 1, rotate: 0 }}
-            transition={{ duration: 0.5, delay: index * 0.2 }}
+            transition={{ duration: 0.4, delay: index * 0.15 }} // Adjusted for smoother animation
           >
             <span className="text-2xl font-bold">{card.value}</span>
             <span className="text-4xl">{suitSymbols[card.suit]}</span>
@@ -63,7 +65,7 @@ const Hand = ({
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        {isDealer && !revealAll ? 'Dealer Hand' : `Hand Value: ${handValue}`}
+        {isDealer && !revealAll ? "Dealer Hand" : `Hand Value: ${handValue}`}
       </motion.div>
     </div>
   );

@@ -1,6 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## 🃏 Blackjack Game  
 
-## Getting Started
+A fully interactive and animated Blackjack game built with **React**, **TypeScript**, and **Framer Motion**. This game allows users to place bets, hit, stand, double down, split hands, and play against the dealer while managing their in-game cash balance.  
+
+Demo: https://cln.sh/qrLdgVSN
+
+### 🚀 Features  
+- 🎴 **Classic Blackjack Gameplay** – Supports all major Blackjack rules including splitting, doubling down, and dealer stand on 17.  
+- 💰 **Betting System** – Players start with a balance of $2000 and can place bets each round.  
+- 🔄 **Hand Splitting** – If dealt a pair, players can split and play multiple hands.  
+- 🃏 **Card Dealing Animation** – Smooth animations using **Framer Motion**.  
+- 🤖 **Dealer AI** – The dealer follows standard Blackjack rules (hits below 17, stands otherwise).  
+- 🎨 **Sleek UI** – Styled with Tailwind CSS for a modern look.  
+
+### 🏗️ Technologies Used  
+- **React** – Frontend framework  
+- **TypeScript** – Type safety and better development experience  
+- **Framer Motion** – Smooth animations  
+- **Tailwind CSS** – Fast and responsive styling  
+
+
+### 🎮 How to Play  
+1. **Start the Game** – Place your bet and click "Deal".  
+2. **Make Your Move** – Choose to Hit, Stand, Double Down, or Split.  
+3. **Dealer's Turn** – The dealer plays automatically.  
+4. **Win or Lose** – Compare hands and see the result.  
+5. **Keep Playing** – Continue betting until you run out of money.  
+
+### 🛠️ Setup & Installation  
 
 First, run the development server:
 
@@ -16,21 +42,9 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 🤝 Contributing  
+Feel free to submit issues and pull requests to improve the game!  
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 📜 License  
+This project is licensed under the **MIT License**.  
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

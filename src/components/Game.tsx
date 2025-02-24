@@ -70,7 +70,7 @@ const Game = () => {
         setResultMessage("Push! Both have Blackjack.");
       } else {
         setCash(cash + betAmount * 1.5);
-        setResultMessage("Blackjack! You win!");
+        setResultMessage(`Blackjack! You win! ${betAmount * 1.5}`);
       }
     } else {
       setGameState("playing");
@@ -185,26 +185,26 @@ const Game = () => {
         const prefix = handPrefix(index);
         if (playerValue > 21) {
           newCash -= bet;
-          messages.push(`${prefix}Bust! You lose.`);
+          messages.push(`${prefix}Bust! You lose \$${bet}.`);
         } else if (dealerValue > 21) {
           newCash += bet;
-          messages.push(`${prefix}Dealer busts! You win!`);
+          messages.push(`${prefix}Dealer busts! You win \$${bet}!`);
         } else if (playerValue === 21 && hand.length === 2) {
           if (dealerValue === 21 && finalDealerHand.length === 2) {
             messages.push(`${prefix}Push! Both have Blackjack.`);
           } else {
             newCash += bet * 1.5;
-            messages.push(`${prefix}Blackjack! You win!`);
+            messages.push(`${prefix}Blackjack! You win \$${bet * 1.5}!`);
           }
         } else if (dealerValue === 21 && finalDealerHand.length === 2) {
           newCash -= bet;
-          messages.push(`${prefix}Dealer has Blackjack. You lose.`);
+          messages.push(`${prefix}Dealer has Blackjack. You lose \$${bet}.`);
         } else if (playerValue > dealerValue) {
           newCash += bet;
-          messages.push(`${prefix}You win!`);
+          messages.push(`${prefix}You win \$${bet}!`);
         } else if (playerValue < dealerValue) {
           newCash -= bet;
-          messages.push(`${prefix}You lose.`);
+          messages.push(`${prefix}You lose \$${bet}.`);
         } else {
           messages.push(`${prefix}Push!`);
         }

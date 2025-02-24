@@ -35,8 +35,17 @@ const Game = () => {
     setDeck(newDeck);
   }, []);
 
+  const fillDeck = () => {
+    if (deck.length < 20) {
+      const newDeck = Deck.createDeck();
+      Deck.shuffle(newDeck);
+      setDeck(newDeck);
+    }
+  };
+
   // Deal cards one at a time with animation
   const dealInitialCards = async (betAmount: number) => {
+    fillDeck();
     const newDeck = [...deck];
     setIsDealing(true);
     setBet(betAmount);
@@ -227,11 +236,7 @@ const Game = () => {
     setHasHit([]);
     setIsDealing(false);
     setGameState("betting");
-    if (deck.length < 20) {
-      const newDeck = Deck.createDeck();
-      Deck.shuffle(newDeck);
-      setDeck(newDeck);
-    }
+    fillDeck();
   };
 
   const resetGame = async () => {

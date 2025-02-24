@@ -3,6 +3,9 @@ export const calculateHandValue = (hand: { suit: string; value: string }[]) => {
   let aces = 0;
 
   for (const card of hand) {
+    if (!card || !card.value) {
+      continue;
+    }
     if (card.value === 'A') {
       aces++;
     } else if (['J', 'Q', 'K'].includes(card.value)) {

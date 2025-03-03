@@ -35,7 +35,7 @@ const Bet = ({
         onChange={(e) => setAmount(Number(e.target.value))}
         className="p-2 border rounded-lg mb-4 w-48 text-center"
         placeholder="Enter bet amount"
-        min="1"
+        min={1}
         max={cash}
       />
       <div className="flex space-x-4">

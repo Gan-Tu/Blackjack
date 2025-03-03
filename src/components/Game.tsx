@@ -200,12 +200,15 @@ const Game = () => {
           messages.push(`${prefix}Dealer busts! You win \$${bet}!`);
         } else if (playerValue === 21 && hand.length === 2) {
           if (dealerValue === 21 && finalDealerHand.length === 2) {
+            // Both gets Natural blackjack
             messages.push(`${prefix}Push! Both have Blackjack.`);
           } else {
+            // Natural blackjack beats everything else
             newCash += bet * 1.5;
             messages.push(`${prefix}Blackjack! You win \$${bet * 1.5}!`);
           }
         } else if (dealerValue === 21 && finalDealerHand.length === 2) {
+          // Dealer Natural blackjack beats everything except player Natural blackjack
           newCash -= bet;
           messages.push(`${prefix}Dealer has Blackjack. You lose \$${bet}.`);
         } else if (playerValue > dealerValue) {

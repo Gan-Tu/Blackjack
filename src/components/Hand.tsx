@@ -2,20 +2,23 @@
 
 import { calculateHandValue } from "@/utils";
 import { motion } from "framer-motion";
+import { type Card } from "./Deck";
 
-const suitSymbols: { [key: string]: string } = {
+const suitSymbols: Record<string, string> = {
   Hearts: "♥",
   Diamonds: "♦",
   Clubs: "♣",
   Spades: "♠"
 };
 
+const redSuits = new Set(["Hearts", "Diamonds"]);
+
 const Hand = ({
   hand,
   isDealer,
   revealAll
 }: {
-  hand: { suit: string; value: string }[];
+  hand: Card[];
   isDealer: boolean;
   revealAll: boolean;
 }) => {
@@ -37,7 +40,7 @@ const Hand = ({
 
   return (
     <div className="flex flex-col items-center">
-      <div className="flex space-x-2">
+      <div className="flex flex-wrap justify-center gap-2">
         {displayHand.map((card, index) => (
           <motion.div
             key={
@@ -47,30 +50,36 @@ const Hand = ({
             }
             className={
               isDealer && !revealAll && index === 1
-                ? "w-24 h-36 bg-gray-700 rounded-lg shadow-lg flex items-center justify-center text-white"
-                : "w-24 h-36 bg-white rounded-lg shadow-lg flex flex-col items-center justify-center text-black"
+                ? "flex aspect-[2/3] w-16 items-center justify-center rounded-lg border border-slate-600 bg-slate-700 text-white shadow-lg sm:w-20 lg:w-24"
+                : `flex aspect-[2/3] w-16 flex-col items-center justify-center rounded-lg border border-slate-200 bg-white shadow-lg sm:w-20 lg:w-24 ${
+                    redSuits.has(card.suit) ? "text-rose-600" : "text-slate-950"
+                  }`
             }
-            initial={{ y: -100, opacity: 0, rotate: -10 }}
+            initial={{ y: -24, opacity: 0, rotate: -5 }}
             animate={{ y: 0, opacity: 1, rotate: 0 }}
-            exit={{ y: 100, opacity: 0, rotate: 10 }}
-            transition={{ duration: 0.4, delay: index * 0.2 }}
+            exit={{ y: 24, opacity: 0, rotate: 5 }}
+            transition={{ duration: 0.18, delay: index * 0.04 }}
           >
             {isDealer && !revealAll && index === 1 ? (
-              <span className="text-2xl">?</span>
+              <span className="text-2xl font-bold">?</span>
             ) : (
               <>
-                <span className="text-2xl font-bold">{card.value}</span>
-                <span className="text-4xl">{suitSymbols[card.suit]}</span>
+                <span className="text-xl font-black sm:text-2xl">
+                  {card.value}
+                </span>
+                <span className="text-3xl sm:text-4xl">
+                  {suitSymbols[card.suit]}
+                </span>
               </>
             )}
           </motion.div>
         ))}
       </div>
       <motion.div
-        className="mt-2 text-white text-lg font-semibold drop-shadow-md"
+        className="mt-2 text-base font-semibold text-white drop-shadow-md sm:text-lg"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.15 }}
       >
         {isDealer && !revealAll ? "Dealer Hand" : `Hand Value: ${handValue}`}
       </motion.div>

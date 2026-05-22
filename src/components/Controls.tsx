@@ -17,11 +17,14 @@ const Controls = ({
   canDouble: boolean;
   canSplit: boolean;
 }) => {
+  const baseButtonClass =
+    "min-h-12 rounded-lg px-5 py-3 text-sm font-bold shadow-lg transition sm:px-6 sm:text-base";
+
   return (
-    <div className="flex space-x-4 mt-6">
+    <div className="grid w-full max-w-2xl grid-cols-4 gap-2 rounded-lg border border-white/15 bg-slate-950/80 p-2 shadow-2xl backdrop-blur sm:gap-3">
       <motion.button
         onClick={hit}
-        className="px-6 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition"
+        className={`${baseButtonClass} bg-emerald-400 text-slate-950 hover:bg-emerald-300 cursor-pointer`}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
@@ -29,7 +32,7 @@ const Controls = ({
       </motion.button>
       <motion.button
         onClick={stand}
-        className="px-6 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition"
+        className={`${baseButtonClass} bg-rose-500 text-white hover:bg-rose-400 cursor-pointer`}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
       >
@@ -37,8 +40,10 @@ const Controls = ({
       </motion.button>
       <motion.button
         onClick={double}
-        className={`px-6 py-3 bg-purple-500 text-white rounded-lg font-semibold transition ${
-          !canDouble ? "opacity-50 cursor-not-allowed" : "hover:bg-purple-600"
+        className={`${baseButtonClass} bg-violet-500 text-white ${
+          !canDouble
+            ? "opacity-50 cursor-not-allowed"
+            : "hover:bg-violet-400 cursor-pointer"
         }`}
         whileHover={canDouble ? { scale: 1.05 } : {}}
         whileTap={canDouble ? { scale: 0.95 } : {}}
@@ -48,8 +53,10 @@ const Controls = ({
       </motion.button>
       <motion.button
         onClick={split}
-        className={`px-6 py-3 bg-yellow-500 text-white rounded-lg font-semibold transition ${
-          !canSplit ? "opacity-50 cursor-not-allowed" : "hover:bg-yellow-600"
+        className={`${baseButtonClass} bg-amber-400 text-slate-950 ${
+          !canSplit
+            ? "opacity-50 cursor-not-allowed"
+            : "hover:bg-amber-300 cursor-pointer"
         }`}
         whileHover={canSplit ? { scale: 1.05 } : {}}
         whileTap={canSplit ? { scale: 0.95 } : {}}

@@ -21,7 +21,7 @@ const Controls = ({
     "min-h-12 rounded-lg px-5 py-3 text-sm font-bold shadow-lg transition sm:px-6 sm:text-base";
 
   return (
-    <div className="grid w-full max-w-2xl grid-cols-4 gap-2 rounded-lg border border-white/15 bg-slate-950/80 p-2 shadow-2xl backdrop-blur sm:gap-3">
+    <div className="grid w-full max-w-2xl grid-cols-4 gap-2 rounded-lg border border-white/15 bg-slate-950/80 p-2 shadow-2xl backdrop-blur-sm sm:gap-3">
       <motion.button
         onClick={hit}
         className={`${baseButtonClass} bg-emerald-400 text-slate-950 hover:bg-emerald-300 cursor-pointer`}

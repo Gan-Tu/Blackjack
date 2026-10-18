@@ -25,7 +25,7 @@ const Bet = ({
 
   return (
     <motion.div
-      className="rounded-lg border border-white/15 bg-slate-950/70 p-4 shadow-xl backdrop-blur"
+      className="rounded-lg border border-white/15 bg-slate-950/70 p-4 shadow-xl backdrop-blur-sm"
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2 }}
@@ -69,7 +69,7 @@ const Bet = ({
         type="number"
         value={amount}
         onChange={(e) => setAmount(Number(e.target.value))}
-        className="mb-4 h-11 w-full rounded-lg border border-white/15 bg-white px-3 text-center text-lg font-semibold text-slate-950 outline-none ring-amber-300 transition focus:ring-2"
+        className="mb-4 h-11 w-full rounded-lg border border-white/15 bg-white px-3 text-center text-lg font-semibold text-slate-950 outline-hidden ring-amber-300 transition focus:ring-2"
         placeholder="Enter bet amount"
         min={1}
         max={cash}

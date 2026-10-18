@@ -400,13 +400,13 @@ const Game = () => {
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             <Score cash={cash} />
-            <div className="rounded-lg border border-white/15 bg-white/10 px-4 py-2 shadow-lg backdrop-blur">
+            <div className="rounded-lg border border-white/15 bg-white/10 px-4 py-2 shadow-lg backdrop-blur-sm">
               <p className="text-xs font-semibold uppercase tracking-wide text-amber-200">
                 Bet
               </p>
               <p className="text-2xl font-bold">${bet || lastBet || 0}</p>
             </div>
-            <div className="col-span-2 rounded-lg border border-white/15 bg-white/10 px-4 py-2 shadow-lg backdrop-blur sm:col-span-1">
+            <div className="col-span-2 rounded-lg border border-white/15 bg-white/10 px-4 py-2 shadow-lg backdrop-blur-sm sm:col-span-1">
               <p className="text-xs font-semibold uppercase tracking-wide text-amber-200">
                 Shoe
               </p>
@@ -429,7 +429,7 @@ const Game = () => {
           />
         </motion.div>
       )}
-        <section className="grid flex-1 gap-4 rounded-lg border border-amber-200/20 bg-emerald-950/45 p-3 shadow-2xl shadow-black/30 backdrop-blur sm:p-5 lg:grid-cols-2">
+        <section className="grid flex-1 gap-4 rounded-lg border border-amber-200/20 bg-emerald-950/45 p-3 shadow-2xl shadow-black/30 backdrop-blur-sm sm:p-5 lg:grid-cols-2">
           <div className="flex min-h-56 flex-col rounded-lg border border-white/10 bg-black/15 p-4">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-white drop-shadow-md">

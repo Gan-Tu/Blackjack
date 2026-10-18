@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 const Score = ({ cash }: { cash: number }) => {
   return (
     <motion.div
-      className="rounded-lg border border-white/15 bg-white/10 px-4 py-2 text-white shadow-lg backdrop-blur"
+      className="rounded-lg border border-white/15 bg-white/10 px-4 py-2 text-white shadow-lg backdrop-blur-sm"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
